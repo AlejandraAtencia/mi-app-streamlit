@@ -117,43 +117,53 @@ with col2:
 st.markdown("---")
 if st.button("🔍 Evaluar viabilidad del proyecto", use_container_width=True):
 
-    # 1. Crear un diccionario con todas las variables inicializadas en 0.0
-    # Es vital que sean flotantes (0.0) para que coincidan con el entrenamiento
+    # 1. Crear el diccionario con todas las variables que el modelo espera
+    # Inicializamos todo en 0.0 (esto cubre los municipios y otras categorías)
     fila = {col: 0.0 for col in variables}
 
-    # 2. Asignar valores a las variables numéricas directas
-    # NOTA: Solo asigna las que el modelo realmente espera (las que están en 'variables')
+    # 2. Asignar las variables numéricas (Asegúrate de que el nombre sea IDÉNTICO al Colab)
     if 'PRECIOVTAX' in fila: fila['PRECIOVTAX'] = float(PRECIOVTAX)
+    if 'GRADOAVANC' in fila: fila['GRADOAVANC'] = float(GRADOAVANC) # Aquí está tu variable
     if 'ESTRATO' in fila:    fila['ESTRATO'] = float(ESTRATO)
     if 'RANVIVI' in fila:    fila['RANVIVI'] = float(RANVIVI)
     if 'CAPITULO' in fila:   fila['CAPITULO'] = float(CAPITULO)
 
-    # 3. Activar Dummies con el formato exacto del Colab (usando .0)
-    # TIPOVRDEST
+    # 3. Asignar las variables categóricas (Dummies)
+    # Importante: Tu Colab generó nombres como 'OB_FORMAL_1.0'
     cat_tipovr = f'TIPOVRDEST_{float(TIPOVRDEST)}'
     if cat_tipovr in fila: fila[cat_tipovr] = 1.0
 
-    # OB_FORMAL
     cat_formal = f'OB_FORMAL_{float(OB_FORMAL)}'
     if cat_formal in fila: fila[cat_formal] = 1.0
 
-    # AMPLIACION
     cat_ampli = f'AMPLIACION_{float(AMPLIACION)}'
     if cat_ampli in fila: fila[cat_ampli] = 1.0
 
-    # 4. Crear DataFrame y REORDENAR columnas según 'variables'
-    # El orden es sagrado para el Scaler y la Red Neuronal
-    entrada = pd.DataFrame([fila])[variables]
+    # 4. Crear el DataFrame con el orden de columnas EXACTO que pide el Scaler
+    entrada = pd.DataFrame([fila])
+    
+    # Reordenamos las columnas para que coincidan con la lista 'variables' del pickle
+    entrada = entrada[variables]
 
-    # 5. Escalar y Predecir
     try:
+        # 5. Transformar y predecir
         entrada_scaled = scaler.transform(entrada)
+        
         pred = modelNN.predict(entrada_scaled)[0]
         prob = modelNN.predict_proba(entrada_scaled)[0]
         
-        # ... aquí sigue tu código para mostrar resultados (st.success / st.error) ...
+        # --- Mostrar resultados ---
+        st.markdown("## Resultado")
+        if pred == 1:
+            st.success(f"✅ **PROYECTO VIABLE**")
+            st.metric("Probabilidad de éxito", f"{prob[1]*100:.1f}%")
+        else:
+            st.error(f"❌ **PROYECTO NO VIABLE**")
+            st.metric("Probabilidad de riesgo", f"{prob[0]*100:.1f}%")
+            
     except ValueError as e:
-        st.error(f"Error de consistencia de datos: {e}")
+        st.error("Error de consistencia en las columnas.")
+        st.write("Detalle técnico del error:", e)
     
     # ── Mostrar resultado
     st.markdown("## Resultado")
