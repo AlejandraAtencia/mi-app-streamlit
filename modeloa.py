@@ -35,7 +35,7 @@ with col1:
     st.subheader("💰 Precio y valor")
 
     PRECIOVTAX = st.number_input(
-        "Precio por m² (COP)",
+        "Precio por m² (miles COP)",
         min_value=100,
         max_value=9400,
         value=2500,
