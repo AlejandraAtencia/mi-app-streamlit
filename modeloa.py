@@ -115,41 +115,38 @@ with col2:
     )
 
 st.markdown("---")
-
-# ── Botón de predicción
 if st.button("🔍 Evaluar viabilidad del proyecto", use_container_width=True):
 
-    # Construir vector de entrada con todas las variables del modelo
-    entrada = pd.DataFrame(columns=variables)
+    # Construir fila con TODAS las variables en ceros
     fila = {col: 0 for col in variables}
 
-    # Asignar valores directos
-    fila['PRECIOVTAX']  = PRECIOVTAX
-    fila['GRADOAVANC']  = GRADOAVANC
-    fila['ESTRATO']     = ESTRATO
-    fila['RANVIVI']     = RANVIVI
-    fila['CAPITULO']    = CAPITULO
+    # Asignar valores numéricos directos
+    fila['PRECIOVTAX'] = PRECIOVTAX
+    fila['GRADOAVANC'] = GRADOAVANC
+    fila['ESTRATO']    = ESTRATO
+    fila['RANVIVI']    = RANVIVI
+    fila['CAPITULO']   = CAPITULO
 
-    # Dummies TIPOVRDEST
+    # Dummies — activar la categoría seleccionada
     if f'TIPOVRDEST_{TIPOVRDEST}' in fila:
         fila[f'TIPOVRDEST_{TIPOVRDEST}'] = 1
 
-    # Dummies OB_FORMAL
     if f'OB_FORMAL_{OB_FORMAL}' in fila:
         fila[f'OB_FORMAL_{OB_FORMAL}'] = 1
 
-    # Dummies AMPLIACION
     if f'AMPLIACION_{AMPLIACION}' in fila:
         fila[f'AMPLIACION_{AMPLIACION}'] = 1
 
-    # Armar dataframe y normalizar
-    entrada = pd.DataFrame([fila])
+    # Armar DataFrame con columnas en el orden exacto del entrenamiento
+    entrada = pd.DataFrame([fila], columns=variables)
+
+    # Normalizar
     entrada_scaled = scaler.transform(entrada)
 
     # Predicción
     pred = modelNN.predict(entrada_scaled)[0]
     prob = modelNN.predict_proba(entrada_scaled)[0]
-
+    
     # ── Mostrar resultado
     st.markdown("## Resultado")
 
