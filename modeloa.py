@@ -117,35 +117,43 @@ with col2:
 st.markdown("---")
 if st.button("🔍 Evaluar viabilidad del proyecto", use_container_width=True):
 
-    # Construir fila con TODAS las variables en ceros
-    fila = {col: 0 for col in variables}
+    # 1. Crear un diccionario con todas las variables inicializadas en 0.0
+    # Es vital que sean flotantes (0.0) para que coincidan con el entrenamiento
+    fila = {col: 0.0 for col in variables}
 
-    # Asignar valores numéricos directos
-    fila['PRECIOVTAX'] = PRECIOVTAX
-    fila['GRADOAVANC'] = GRADOAVANC
-    fila['ESTRATO']    = ESTRATO
-    fila['RANVIVI']    = RANVIVI
-    fila['CAPITULO']   = CAPITULO
+    # 2. Asignar valores a las variables numéricas directas
+    # NOTA: Solo asigna las que el modelo realmente espera (las que están en 'variables')
+    if 'PRECIOVTAX' in fila: fila['PRECIOVTAX'] = float(PRECIOVTAX)
+    if 'ESTRATO' in fila:    fila['ESTRATO'] = float(ESTRATO)
+    if 'RANVIVI' in fila:    fila['RANVIVI'] = float(RANVIVI)
+    if 'CAPITULO' in fila:   fila['CAPITULO'] = float(CAPITULO)
 
-    # Dummies — activar la categoría seleccionada
-    if f'TIPOVRDEST_{TIPOVRDEST}' in fila:
-        fila[f'TIPOVRDEST_{TIPOVRDEST}'] = 1
+    # 3. Activar Dummies con el formato exacto del Colab (usando .0)
+    # TIPOVRDEST
+    cat_tipovr = f'TIPOVRDEST_{float(TIPOVRDEST)}'
+    if cat_tipovr in fila: fila[cat_tipovr] = 1.0
 
-    if f'OB_FORMAL_{OB_FORMAL}' in fila:
-        fila[f'OB_FORMAL_{OB_FORMAL}'] = 1
+    # OB_FORMAL
+    cat_formal = f'OB_FORMAL_{float(OB_FORMAL)}'
+    if cat_formal in fila: fila[cat_formal] = 1.0
 
-    if f'AMPLIACION_{AMPLIACION}' in fila:
-        fila[f'AMPLIACION_{AMPLIACION}'] = 1
+    # AMPLIACION
+    cat_ampli = f'AMPLIACION_{float(AMPLIACION)}'
+    if cat_ampli in fila: fila[cat_ampli] = 1.0
 
-    # Armar DataFrame con columnas en el orden exacto del entrenamiento
-    entrada = pd.DataFrame([fila], columns=variables)
+    # 4. Crear DataFrame y REORDENAR columnas según 'variables'
+    # El orden es sagrado para el Scaler y la Red Neuronal
+    entrada = pd.DataFrame([fila])[variables]
 
-    # Normalizar
-    entrada_scaled = scaler.transform(entrada)
-
-    # Predicción
-    pred = modelNN.predict(entrada_scaled)[0]
-    prob = modelNN.predict_proba(entrada_scaled)[0]
+    # 5. Escalar y Predecir
+    try:
+        entrada_scaled = scaler.transform(entrada)
+        pred = modelNN.predict(entrada_scaled)[0]
+        prob = modelNN.predict_proba(entrada_scaled)[0]
+        
+        # ... aquí sigue tu código para mostrar resultados (st.success / st.error) ...
+    except ValueError as e:
+        st.error(f"Error de consistencia de datos: {e}")
     
     # ── Mostrar resultado
     st.markdown("## Resultado")
